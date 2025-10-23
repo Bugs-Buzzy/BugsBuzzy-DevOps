@@ -165,7 +165,7 @@ services:
         max-file: "3"
 
   snappymail:
-    image: crazymax/snappymail:latest
+    image: ajanvier/snappymail:latest
     container_name: snappymail
     restart: unless-stopped
     ports:
