@@ -208,8 +208,6 @@ services:
       - ROUNDCUBEMAIL_SMTP_PORT=587
       - ROUNDCUBEMAIL_SKIN=elastic
       - ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE=25M
-    volumes:
-      - ./data/roundcube/www:/var/www/html:rw
     networks:
       - bugsbuzzy_net
     profiles:
