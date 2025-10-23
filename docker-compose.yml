@@ -6,7 +6,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     profiles:
       - prod
     logging:
@@ -25,7 +25,7 @@ services:
     ports:
       - "127.0.0.1:3030:3000"
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     profiles:
       - dev
 
@@ -45,7 +45,7 @@ services:
       mailserver:
         condition: service_started
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     volumes:
       - ./data/backend_static:/app/staticfiles:rw
       - ./data/backend_media:/app/media:rw
@@ -72,7 +72,7 @@ services:
     ports:
       - "127.0.0.1:8080:8000"
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     profiles:
       - dev
 
@@ -90,7 +90,7 @@ services:
     volumes:
       - ./data/postgresql:/var/lib/postgresql/data:rw
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     profiles:
       - prod
     healthcheck:
@@ -144,7 +144,7 @@ services:
     cap_add:
       - NET_ADMIN
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     profiles:
       - prod
     healthcheck:
@@ -174,7 +174,7 @@ services:
     volumes:
       - ./data/roundcube/db:/var/lib/mysql:rw
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     profiles:
       - prod
     healthcheck:
@@ -213,7 +213,7 @@ services:
     volumes:
       - ./data/roundcube/www:/var/www/html:rw
     networks:
-      - ${DOCKER_NETWORK}
+      - bugsbuzzy_net
     profiles:
       - prod
     depends_on:
@@ -236,6 +236,6 @@ services:
         max-file: "3"
 
 networks:
-  ${DOCKER_NETWORK}:
+  bugsbuzzy_net:
     external: true
     driver: bridge
