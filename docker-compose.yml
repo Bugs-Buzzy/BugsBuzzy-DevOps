@@ -119,6 +119,7 @@ services:
       - SSL_CERT_PATH=${SSL_CERT_PATH}
       - SSL_KEY_PATH=${SSL_KEY_PATH}
       - PERMIT_DOCKER=connected-networks
+      - POSTFIX_INET_PROTOCOLS=ipv4
       - ENABLE_DOVECOT=1
       - ENABLE_POP3=0
       - ENABLE_DKIM=1
