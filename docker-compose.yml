@@ -164,72 +164,20 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  roundcube_db:
-    image: mysql:8.0
-    container_name: roundcube_db
-    restart: unless-stopped
-    environment:
-      - MYSQL_DATABASE=roundcubemail
-      - MYSQL_USER=roundcube
-      - MYSQL_PASSWORD=${ROUNDCUBE_DB_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-    volumes:
-      - ./data/roundcube/db:/var/lib/mysql:rw
-    networks:
-      - bugsbuzzy_net
-    profiles:
-      - prod
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    security_opt:
-      - no-new-privileges:true
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  webmail:
-    image: roundcube/roundcubemail:latest
-    container_name: webmail
+  snappymail:
+    image: crazymax/snappymail:latest
+    container_name: snappymail
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8888:80"
-    environment:
-      - ROUNDCUBEMAIL_DB_TYPE=mysql
-      - ROUNDCUBEMAIL_DB_HOST=roundcube_db
-      - ROUNDCUBEMAIL_DB_NAME=roundcubemail
-      - ROUNDCUBEMAIL_DB_USER=roundcube
-      - ROUNDCUBEMAIL_DB_PASSWORD=${ROUNDCUBE_DB_PASSWORD}
-      - ROUNDCUBEMAIL_DEFAULT_HOST=${ROUNDCUBEMAIL_DEFAULT_HOST}
-      - ROUNDCUBEMAIL_DEFAULT_PORT=${ROUNDCUBEMAIL_DEFAULT_PORT}
-      - ROUNDCUBEMAIL_SMTP_SERVER=mailserver
-      - ROUNDCUBEMAIL_SMTP_PORT=25
-      - ROUNDCUBEMAIL_SMTP_USER=
-      - ROUNDCUBEMAIL_SMTP_PASS=
-      - ROUNDCUBEMAIL_SKIN=elastic
-      - ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE=25M
+      - "127.0.0.1:8888:8888" 
+    volumes:
+      - ./data/snappymail:/data
     networks:
       - bugsbuzzy_net
     profiles:
       - prod
     depends_on:
-      mailserver:
-        condition: service_started
-      roundcube_db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    security_opt:
-      - no-new-privileges:true
+      - mailserver
     logging:
       driver: "json-file"
       options:
