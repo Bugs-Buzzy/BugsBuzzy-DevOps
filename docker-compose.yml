@@ -118,7 +118,7 @@ services:
       - SSL_TYPE=manual
       - SSL_CERT_PATH=${SSL_CERT_PATH}
       - SSL_KEY_PATH=${SSL_KEY_PATH}
-      - PERMIT_DOCKER=network
+      - PERMIT_DOCKER=connected-networks
       - ENABLE_DOVECOT=1
       - ENABLE_POP3=0
       - ENABLE_DKIM=1
