@@ -1,0 +1,241 @@
+services:
+  frontend:
+    image: ${FRONT_PACKAGE}:production
+    container_name: frontend_app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - ${DOCKER_NETWORK}
+    profiles:
+      - prod
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend_dev:
+    image: ${FRONT_PACKAGE}:development
+    container_name: frontend_app_dev
+    restart: unless-stopped
+    environment:
+      - APP_ENV=development
+      - VITE_API_BASE_URL=${DEV_VITE_API_BASE_URL}
+    ports:
+      - "127.0.0.1:3030:3000"
+    networks:
+      - ${DOCKER_NETWORK}
+    profiles:
+      - dev
+
+  # Django Backend
+  backend:
+    image: ${BACK_PACKAGE}:production
+    container_name: backend_app
+    restart: unless-stopped
+    env_file: .env.back.prod
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      mailserver:
+        condition: service_started
+    networks:
+      - ${DOCKER_NETWORK}
+    volumes:
+      - ./data/backend_static:/app/staticfiles:rw
+      - ./data/backend_media:/app/media:rw
+    profiles:
+      - prod
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend_dev:
+    image: ${BACK_PACKAGE}:development
+    container_name: backend_app_dev
+    restart: unless-stopped
+    env_file: .env.back.dev
+    environment:
+      - DATABASE_URL=sqlite:////app/dev-db.sqlite3
+    volumes:
+      - type: bind
+        source: ./data/dev-db.sqlite3
+        target: /app/dev-db.sqlite3
+      - ./data/backend_dev_media:/app/media:rw
+    ports:
+      - "127.0.0.1:8080:8000"
+    networks:
+      - ${DOCKER_NETWORK}
+    profiles:
+      - dev
+
+  ## PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: pgdatabase
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data:rw
+    networks:
+      - ${DOCKER_NETWORK}
+    profiles:
+      - prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mailserver
+    restart: unless-stopped
+    hostname: ${MAIL_HOSTNAME}
+    environment:
+      - DOMAINNAME=${MAIL_DOMAIN}
+      - DKIM_DOMAINS=${MAIL_DOMAIN}
+      - SSL_TYPE=manual
+      - SSL_CERT_PATH=${SSL_CERT_PATH}
+      - SSL_KEY_PATH=${SSL_KEY_PATH}
+      - PERMIT_DOCKER=network
+      - ENABLE_DOVECOT=1
+      - ENABLE_POP3=0
+      - ENABLE_DKIM=1
+      - ENABLE_SPF_CHECK=1
+      - ENABLE_DMARC=1
+      - ENABLE_FAIL2BAN=1
+      - ENABLE_CLAMAV=0
+      - ENABLE_AMAVIS=0
+      - LOG_LEVEL=info
+      - POSTMASTER_ADDRESS=postmaster@${MAIL_DOMAIN}
+      - OVERRIDE_HOSTNAME=${MAIL_HOSTNAME}
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./data/dms/config:/tmp/docker-mailserver:rw
+      - ./data/dms/mail-data:/var/mail:rw
+      - ./data/dms/mail-state:/var/mail-state:rw
+      - ./data/dms/mail-logs:/var/log/mail:rw
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - ${DOCKER_NETWORK}
+    profiles:
+      - prod
+    healthcheck:
+      test: ["CMD", "ss", "-lntp", "|", "grep", "-E", ":25|:587|:993"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  roundcube_db:
+    image: mysql:8.0
+    container_name: roundcube_db
+    restart: unless-stopped
+    env_file: .env.roundcube
+    environment:
+      - MYSQL_DATABASE=roundcubemail
+      - MYSQL_USER=roundcube
+      - MYSQL_PASSWORD=${ROUNDCUBE_DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./data/roundcube/db:/var/lib/mysql:rw
+    networks:
+      - ${DOCKER_NETWORK}
+    profiles:
+      - prod
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  webmail:
+    image: roundcube/roundcubemail:latest
+    container_name: webmail
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:80"
+    env_file: .env.roundcube
+    environment:
+      - ROUNDCUBEMAIL_DB_TYPE=mysql
+      - ROUNDCUBEMAIL_DB_HOST=roundcube_db
+      - ROUNDCUBEMAIL_DB_NAME=roundcubemail
+      - ROUNDCUBEMAIL_DB_USER=roundcube
+      - ROUNDCUBEMAIL_DB_PASSWORD=${ROUNDCUBE_DB_PASSWORD}
+      - ROUNDCUBEMAIL_DEFAULT_HOST=ssl://mailserver
+      - ROUNDCUBEMAIL_DEFAULT_PORT=993
+      - ROUNDCUBEMAIL_SMTP_HOST=tls://mailserver
+      - ROUNDCUBEMAIL_SMTP_PORT=587
+      - ROUNDCUBEMAIL_SKIN=elastic
+      - ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE=25M
+    volumes:
+      - ./data/roundcube/www:/var/www/html:rw
+    networks:
+      - ${DOCKER_NETWORK}
+    profiles:
+      - prod
+    depends_on:
+      mailserver:
+        condition: service_started
+      roundcube_db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ${DOCKER_NETWORK}:
+    external: true
+    driver: bridge

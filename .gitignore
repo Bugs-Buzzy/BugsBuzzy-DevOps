@@ -1,0 +1,99 @@
+# Environment Files
+.env
+.env.back.dev
+.env.back.prod
+.env.roundcube
+*.env.local
+*.env.*.local
+
+# Keep example files
+!.env.example
+!.env.*.example
+
+# Data Directories
+data/
+/data/
+
+# Backup Files
+backups/
+*.backup
+*.bak
+*.old
+
+# Editor Swap Files
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+..*.swp
+
+# IDE Files
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+docker-compose.*.log
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# SSL/TLS Certificates (if stored locally)
+*.pem
+*.key
+*.crt
+*.cert
+certificates/
+certs/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ansible
+*.retry
+.ansible/
+
+# Secrets
+secrets/
+*.secret
+credentials/
+*.credentials
+
+# Database dumps
+*.sql
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+
+# Archives
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
