@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ${FRONT_PACKAGE}:production
+    image: ${FRONT_PACKAGE}:${FRONT_PROD_TAG:-production}
     container_name: frontend_app
     restart: unless-stopped
     ports:
@@ -16,7 +16,7 @@ services:
         max-file: "3"
 
   frontend_dev:
-    image: ${FRONT_PACKAGE}:development
+    image: ${FRONT_PACKAGE}:${FRONT_DEV_TAG:-development}
     container_name: frontend_app_dev
     restart: unless-stopped
     environment:
@@ -31,7 +31,7 @@ services:
 
   # Django Backend
   backend:
-    image: ${BACK_PACKAGE}:production
+    image: ${BACK_PACKAGE}:${BACK_PROD_TAG:-production}
     container_name: backend_app
     restart: unless-stopped
     env_file: .env.back.prod
@@ -58,7 +58,7 @@ services:
         max-file: "3"
 
   backend_dev:
-    image: ${BACK_PACKAGE}:development
+    image: ${BACK_PACKAGE}:${BACK_DEV_TAG:-development}
     container_name: backend_app_dev
     restart: unless-stopped
     env_file: .env.back.dev
